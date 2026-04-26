@@ -1,5 +1,11 @@
 # Pilot Evaluation Plan
 
+## Pilot objective
+
+This pilot evaluates whether `causal-credit-risk-engine` can support model-risk, compliance, internal audit, or AI governance workflows by producing replayable causal audit artifacts from controlled decision inputs.
+
+The pilot is not a production deployment, credit approval workflow, legal compliance review, or fairness certification. It is a structured evaluation of causal traceability, deterministic replay, audit-chain integrity, subgroup diagnostics, and evidence-pack usefulness.
+
 ## Duration
 
 2 to 4 weeks.
@@ -49,6 +55,24 @@
 - Hosted infrastructure and SSO rollout
 
 ## Decision criteria for paid license
+
+## Commercial transition
+
+A paid commercial license is required before any production deployment, regulated workflow use, customer-data validation, internal system integration, or customer-facing use.
+
+A commercial pilot or production license may include:
+
+- integration guidance
+- deployment-boundary review
+- configuration review
+- audit-output review
+- evidence-pack workflow review
+- governance documentation support
+- adapter planning for auth, storage, tenancy, model registry, or policy registry
+
+Commercial support does not include legal advice, credit-policy approval, fairness certification, adverse-action review, or certified regulatory compliance.
+
+For commercial licensing, contact: smith@antiparty.co
 
 - Pilot success criteria met.
 - Integration scope agreed.
