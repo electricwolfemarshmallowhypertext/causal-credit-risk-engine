@@ -3,6 +3,7 @@
 ![Tests](https://github.com/electricwolfemarshmallowhypertext/causal-credit-risk-engine/actions/workflows/ci.yml/badge.svg)
 ![License: BUSL-1.1](https://img.shields.io/badge/license-BUSL--1.1-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19779499.svg)](https://doi.org/10.5281/zenodo.19779499)
 
 Config-driven causal inference engine for explainable credit-risk decisions, counterfactuals, and audit traces.
 
@@ -17,6 +18,15 @@ Config-driven causal inference engine for explainable credit-risk decisions, cou
 It demonstrates how a config-driven causal DAG can produce causal decision pathways, counterfactual explanations, structured audit records, deterministic replay checks, tamper-evident audit-chain metadata, subgroup fairness diagnostics, and CLI/API/batch workflows.
 
 The goal is not to score credit applications. The goal is to show how causal reasoning can be packaged as an audit layer for AI governance, model-risk review, and compliance workflows.
+
+## Research note
+
+A technical brief describing the architecture is available on Zenodo:
+
+- DOI: https://doi.org/10.5281/zenodo.19779499
+- Record: https://zenodo.org/records/19779499
+
+The paper describes the causal audit-trace pattern behind this repository: config-driven causal reasoning, deterministic replay, audit-chain integrity, fairness diagnostics, and governance-oriented decision artifacts.
 
 ## What this provides
 
