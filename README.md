@@ -10,6 +10,14 @@ Config-driven causal inference engine for explainable credit-risk decisions, cou
 
 > Warning: Source-available software under BUSL-1.1, not OSI open-source, not for real lending decisions, and not for credit eligibility decisions.
 
+## What this is
+
+`causal-credit-risk-engine` is a reference implementation for turning high-risk AI decisions into replayable, inspectable audit artifacts.
+
+It demonstrates how a config-driven causal DAG can produce causal decision pathways, counterfactual explanations, structured audit records, deterministic replay checks, tamper-evident audit-chain metadata, subgroup fairness diagnostics, and CLI/API/batch workflows.
+
+The goal is not to score credit applications. The goal is to show how causal reasoning can be packaged as an audit layer for AI governance, model-risk review, and compliance workflows.
+
 ## What this provides
 
 - Versioned model and policy config loading
