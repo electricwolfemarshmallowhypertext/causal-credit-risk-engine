@@ -69,6 +69,10 @@ def _utc_now() -> str:
     return datetime.now(tz=timezone.utc).isoformat(timespec="seconds")
 
 
+def _progress(message: str) -> None:
+    print(f"[progress] {message}", file=sys.stderr, flush=True)
+
+
 def _read_csv_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as fh:
         reader = csv.DictReader(fh)
@@ -134,7 +138,9 @@ def _build_validation_report(
     cpd_summary: dict[str, Any],
     decision_distribution: dict[str, int],
     replay_success_rate: float,
-    audit_chain_valid: bool,
+    audit_chain_valid: bool | None,
+    evidence_pack_mode: str,
+    evidence_pack_rows: int | None,
     fairness_summary: dict[str, Any],
     mapping_assumptions: str,
 ) -> None:
@@ -176,13 +182,22 @@ def _build_validation_report(
             "",
             json.dumps(decision_distribution, indent=2),
             "",
+            "## Evidence pack execution",
+            "",
+            f"- mode: {evidence_pack_mode}",
+            *(
+                [f"- sampled_rows: {evidence_pack_rows}"]
+                if evidence_pack_rows is not None
+                else []
+            ),
+            "",
             "## Replay success rate",
             "",
             f"{replay_success_rate:.6f}",
             "",
             "## Audit-chain verification result",
             "",
-            str(audit_chain_valid).lower(),
+            ("skipped" if audit_chain_valid is None else str(audit_chain_valid).lower()),
             "",
             "## Fairness diagnostic summary",
             "",
@@ -243,6 +258,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum number of decision-level audit traces to generate.",
     )
     parser.add_argument(
+        "--skip-evidence-pack",
+        action="store_true",
+        help="Skip evidence-pack export for faster validation runs.",
+    )
+    parser.add_argument(
+        "--evidence-pack-max-rows",
+        type=int,
+        default=None,
+        help="When set, export evidence pack from only the first N combined normalized rows.",
+    )
+    parser.add_argument(
         "--cpd-source-dataset",
         action="append",
         default=None,
@@ -262,9 +288,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
+    if args.evidence_pack_max_rows is not None and args.evidence_pack_max_rows <= 0:
+        raise ValueError("--evidence-pack-max-rows must be a positive integer")
+
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    _progress("loading inputs")
     all_rows: list[dict[str, str]] = []
     datasets_used: list[str] = []
     source_urls: list[str] = []
@@ -282,6 +312,7 @@ def main() -> int:
     if not valid_rows:
         raise ValueError("No valid normalized rows available after required-field/state filtering.")
 
+    _progress("combining normalized rows")
     combined_normalized = output_dir / "combined_normalized.csv"
     combined_fields = sorted({key for row in valid_rows for key in row.keys()})
     _write_csv(combined_normalized, combined_fields, valid_rows)
@@ -354,6 +385,7 @@ def main() -> int:
     batch_input_path = output_dir / "batch_input.csv"
     _write_csv(batch_input_path, ["tenant_id", "tenure", "utilization", args.subgroup_column], batch_input_rows)
 
+    _progress("running batch decisions")
     batch_output_path = output_dir / "batch_output.csv"
     batch_summary = run_batch_csv(
         model_config_path=draft_model_config_path,
@@ -367,6 +399,7 @@ def main() -> int:
     decision_distribution = _decision_distribution(batch_rows)
 
     # 4. Fairness diagnostics.
+    _progress("generating fairness report")
     fairness_report = compute_fairness_report(
         batch_rows,
         subgroup_column=args.subgroup_column,
@@ -376,6 +409,7 @@ def main() -> int:
     fairness_path.write_text(json.dumps(fairness_report, indent=2), encoding="utf-8")
 
     # 5. Decision-level audit traces and replay checks.
+    _progress("generating audit traces")
     audit_traces: list[dict[str, Any]] = []
     replay_success = 0
     replay_checked = 0
@@ -403,20 +437,39 @@ def main() -> int:
     audit_traces_path.write_text(json.dumps(audit_traces, indent=2), encoding="utf-8")
     replay_success_rate = (replay_success / replay_checked) if replay_checked else 0.0
 
-    # 6. Export evidence pack from the batch input.
-    evidence_pack_dir = output_dir / "evidence_pack"
-    evidence_pack_metadata = export_evidence_pack(
-        input_csv=batch_input_path,
-        output_dir=evidence_pack_dir,
-        model_config_path=draft_model_config_path,
-        policy_config_path=Path(args.policy_config),
-    )
+    evidence_pack_mode = "skipped" if args.skip_evidence_pack else "full"
+    evidence_pack_rows: int | None = None
+    evidence_pack_metadata: dict[str, Any] | None = None
+    audit_chain_valid: bool | None = None
+    if args.skip_evidence_pack:
+        pass
+    else:
+        _progress("exporting evidence pack")
+        evidence_pack_dir = output_dir / "evidence_pack"
+        evidence_input_path = batch_input_path
+        if args.evidence_pack_max_rows is not None:
+            evidence_pack_mode = "sampled"
+            evidence_pack_rows = min(args.evidence_pack_max_rows, len(batch_input_rows))
+            evidence_input_path = output_dir / "evidence_pack_input.sampled.csv"
+            _write_csv(
+                evidence_input_path,
+                ["tenant_id", "tenure", "utilization", args.subgroup_column],
+                batch_input_rows[:evidence_pack_rows],
+            )
 
-    audit_chain_path = evidence_pack_dir / "audit_chain.json"
-    audit_chain_rows = json.loads(audit_chain_path.read_text(encoding="utf-8"))
-    audit_chain_valid = verify_audit_chain(audit_chain_rows)
+        evidence_pack_metadata = export_evidence_pack(
+            input_csv=evidence_input_path,
+            output_dir=evidence_pack_dir,
+            model_config_path=draft_model_config_path,
+            policy_config_path=Path(args.policy_config),
+        )
+
+        audit_chain_path = evidence_pack_dir / "audit_chain.json"
+        audit_chain_rows = json.loads(audit_chain_path.read_text(encoding="utf-8"))
+        audit_chain_valid = verify_audit_chain(audit_chain_rows)
 
     # 7. Write validation report.
+    _progress("writing report")
     report_path = output_dir / "public_institutional_validation_report.generated.md"
     _build_validation_report(
         report_path=report_path,
@@ -429,6 +482,8 @@ def main() -> int:
         decision_distribution=decision_distribution,
         replay_success_rate=replay_success_rate,
         audit_chain_valid=audit_chain_valid,
+        evidence_pack_mode=evidence_pack_mode,
+        evidence_pack_rows=evidence_pack_rows,
         fairness_summary={
             "subgroup_column": fairness_report.get("subgroup_column"),
             "rows_analyzed": fairness_report.get("rows_analyzed"),
@@ -449,6 +504,8 @@ def main() -> int:
         "datasets_used": sorted(set(datasets_used)),
         "cpd_source_datasets": list(cpd_source_datasets),
         "cpd_source_rows": len(cpd_source_rows),
+        "evidence_pack_mode": evidence_pack_mode,
+        "evidence_pack_rows": evidence_pack_rows,
         "draft_model_config": str(draft_model_config_path),
         "batch_summary": batch_summary,
         "decision_distribution": decision_distribution,

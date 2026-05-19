@@ -28,6 +28,10 @@ def _utc_stamp() -> str:
     return datetime.now(tz=timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
+def _progress(message: str) -> None:
+    print(f"[progress] {message}", file=sys.stderr, flush=True)
+
+
 def _read_csv(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as fh:
         reader = csv.DictReader(fh)
@@ -42,22 +46,44 @@ def export_evidence_pack(
     output_dir: Path,
     model_config_path: Path | None = None,
     policy_config_path: Path | None = None,
+    max_rows: int | None = None,
 ) -> dict[str, Any]:
     model_path = model_config_path or default_model_config_path()
     policy_path = policy_config_path or default_policy_config_path()
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    _progress("loading evidence-pack input")
     batch_output = output_dir / "batch_output.csv"
     source_rows = _read_csv(input_csv)
+    if max_rows is not None:
+        if max_rows <= 0:
+            raise ValueError("max_rows must be a positive integer")
+        source_rows = source_rows[:max_rows]
+    if not source_rows:
+        raise ValueError("Evidence-pack input contains no rows")
+
+    source_csv_for_batch = input_csv
+    if max_rows is not None:
+        sample_input = output_dir / "evidence_pack_input.sampled.csv"
+        fieldnames = list(source_rows[0].keys())
+        with sample_input.open("w", encoding="utf-8", newline="") as fh:
+            writer = csv.DictWriter(fh, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(source_rows)
+        source_csv_for_batch = sample_input
+
     subgroup = "segment" if source_rows and "segment" in source_rows[0] else None
+
+    _progress("running evidence-pack batch decisions")
     batch_summary = run_batch_csv(
         model_config_path=model_path,
         policy_config_path=policy_path,
-        csv_input_path=input_csv,
+        csv_input_path=source_csv_for_batch,
         csv_output_path=batch_output,
         subgroup_column=subgroup,
     )
 
+    _progress("generating evidence-pack fairness report")
     batch_rows = _read_csv(batch_output)
     fairness_report = compute_fairness_report(
         batch_rows,
@@ -67,6 +93,7 @@ def export_evidence_pack(
     fairness_path = output_dir / "fairness_report.json"
     fairness_path.write_text(json.dumps(fairness_report, indent=2), encoding="utf-8")
 
+    _progress("generating evidence-pack audit chain")
     chain_records: list[dict[str, Any]] = []
     previous_hash: str | None = None
     for index, row in enumerate(source_rows):
@@ -112,6 +139,8 @@ def export_evidence_pack(
     metadata = {
         "generated_at_utc": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
         "input_csv": str(input_csv),
+        "input_rows_used": len(source_rows),
+        "max_rows": max_rows,
         "batch_output": str(batch_output),
         "fairness_report": str(fairness_path),
         "audit_chain": str(chain_path),
@@ -146,6 +175,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--policy-config",
         default=None,
         help="Optional policy config path. Defaults to reference policy config.",
+    )
+    parser.add_argument(
+        "--max-rows",
+        type=int,
+        default=None,
+        help="Optional maximum number of input rows to include in the evidence pack.",
     )
     return parser
 
@@ -189,6 +224,7 @@ def main() -> int:
         output_dir=output_dir,
         model_config_path=model_config_path,
         policy_config_path=policy_config_path,
+        max_rows=args.max_rows,
     )
     print(json.dumps(metadata, indent=2))
     return 0

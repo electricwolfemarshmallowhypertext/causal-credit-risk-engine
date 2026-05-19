@@ -120,6 +120,82 @@ def test_prepare_scripts_generate_normalized_outputs() -> None:
         assert rows[0]["utilization"] in {"low", "high"}
 
 
+def test_prepare_fannie_single_file_historical_performance_format() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_dir = Path(tmp)
+        fannie_in = tmp_dir / "fannie_hp.csv"
+        fannie_out = tmp_dir / "fannie_norm.csv"
+
+        def _build_row(
+            loan_id: str,
+            reporting_period: str,
+            upb: str,
+            loan_age: str,
+            current_ltv: str,
+            current_cltv: str,
+            dti: str,
+            fico: str,
+            state: str,
+            delinquency: str,
+        ) -> list[str]:
+            row = [""] * 113
+            row[0] = ""
+            row[1] = loan_id
+            row[2] = reporting_period
+            row[9] = upb
+            row[12] = "360"
+            row[13] = "012020"
+            row[14] = "022020"
+            row[15] = loan_age
+            row[16] = "300"
+            row[18] = "012050"
+            row[19] = current_ltv
+            row[20] = current_cltv
+            row[21] = "1"
+            row[22] = dti
+            row[23] = fico
+            row[25] = "N"
+            row[27] = "P"
+            row[28] = "1"
+            row[29] = "R"
+            row[30] = state
+            row[31] = "12345"
+            row[32] = "606"
+            row[33] = "0"
+            row[34] = "FRM"
+            row[39] = delinquency
+            return row
+
+        with fannie_in.open("w", encoding="utf-8", newline="") as fh:
+            writer = csv.writer(fh, delimiter="|")
+            writer.writerow(_build_row("0001", "042025", "91000.00", "60", "72", "75", "38", "720", "IL", "00"))
+            writer.writerow(_build_row("0002", "042025", "120000.00", "12", "90", "92", "52", "640", "CA", "04"))
+
+        result = _run(
+            [
+                "scripts/prepare_fannie_mae.py",
+                "--input",
+                str(fannie_in),
+                "--max-rows",
+                "2",
+                "--output",
+                str(fannie_out),
+            ]
+        )
+        assert result.returncode == 0, result.stderr
+
+        with fannie_out.open("r", encoding="utf-8", newline="") as fh:
+            rows = list(csv.DictReader(fh))
+
+        assert len(rows) == 2
+        assert rows[0]["source_dataset"] == "fannie_mae_sf_performance"
+        assert rows[0]["source_record_id"] == "0001"
+        assert rows[0]["tenure"] in {"short", "long"}
+        assert rows[0]["utilization"] in {"low", "high"}
+        assert rows[0]["risk"] in {"low_risk", "high_risk"}
+        assert rows[1]["risk"] == "high_risk"
+
+
 def test_public_validation_runner_executes_with_normalized_input() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = Path(tmp)
