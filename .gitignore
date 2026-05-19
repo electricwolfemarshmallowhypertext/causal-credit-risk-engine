@@ -34,6 +34,7 @@ outputs/
 outputs/demo/
 outputs/evidence_pack_*/
 validation/outputs/
+examples/data/
 *.tmp
 *.bak
 *_out.csv
@@ -45,6 +46,11 @@ validation/outputs/
 *.sqlite
 *.db
 coverage.xml
+
+# Local downloaded validation datasets
+examples/data/
+examples/*.zip
+validation/outputs/
 
 # IDE/editor
 .idea/

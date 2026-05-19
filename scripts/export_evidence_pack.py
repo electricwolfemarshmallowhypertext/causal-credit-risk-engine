@@ -36,9 +36,15 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
         return [dict(row) for row in reader]
 
 
-def export_evidence_pack(*, input_csv: Path, output_dir: Path) -> dict[str, Any]:
-    model_path = default_model_config_path()
-    policy_path = default_policy_config_path()
+def export_evidence_pack(
+    *,
+    input_csv: Path,
+    output_dir: Path,
+    model_config_path: Path | None = None,
+    policy_config_path: Path | None = None,
+) -> dict[str, Any]:
+    model_path = model_config_path or default_model_config_path()
+    policy_path = policy_config_path or default_policy_config_path()
     output_dir.mkdir(parents=True, exist_ok=True)
 
     batch_output = output_dir / "batch_output.csv"
@@ -131,6 +137,16 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Output directory. Defaults to outputs/evidence_pack_<timestamp>/",
     )
+    parser.add_argument(
+        "--model-config",
+        default=None,
+        help="Optional model config path. Defaults to reference model config.",
+    )
+    parser.add_argument(
+        "--policy-config",
+        default=None,
+        help="Optional policy config path. Defaults to reference policy config.",
+    )
     return parser
 
 
@@ -151,7 +167,29 @@ def main() -> int:
     )
     if not output_dir.is_absolute():
         output_dir = root / output_dir
-    metadata = export_evidence_pack(input_csv=input_csv, output_dir=output_dir)
+
+    model_config_path: Path | None = None
+    if args.model_config:
+        model_config_path = Path(args.model_config)
+        if not model_config_path.is_absolute():
+            model_config_path = root / model_config_path
+        if not model_config_path.exists():
+            parser.error(f"Model config not found: {model_config_path}")
+
+    policy_config_path: Path | None = None
+    if args.policy_config:
+        policy_config_path = Path(args.policy_config)
+        if not policy_config_path.is_absolute():
+            policy_config_path = root / policy_config_path
+        if not policy_config_path.exists():
+            parser.error(f"Policy config not found: {policy_config_path}")
+
+    metadata = export_evidence_pack(
+        input_csv=input_csv,
+        output_dir=output_dir,
+        model_config_path=model_config_path,
+        policy_config_path=policy_config_path,
+    )
     print(json.dumps(metadata, indent=2))
     return 0
 

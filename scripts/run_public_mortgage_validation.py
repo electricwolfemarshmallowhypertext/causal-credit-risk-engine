@@ -24,6 +24,7 @@ from causal_credit_risk.batch import run_batch_csv
 from causal_credit_risk.cli import run_decision
 from causal_credit_risk.cpd_estimation import build_draft_model_config
 from causal_credit_risk.fairness import compute_fairness_report
+from causal_credit_risk.io_utils import read_json_file
 from causal_credit_risk.registry import default_model_config_path, default_policy_config_path
 from causal_credit_risk.replay import replay_from_audit_payload
 from export_evidence_pack import export_evidence_pack
@@ -56,6 +57,12 @@ DATASET_SOURCE_URLS: dict[str, str] = {
     "cfpb_hmda": "https://ffiec.cfpb.gov/",
     "fhfa_pudb": "https://www.fhfa.gov/pudbdata",
 }
+
+DEFAULT_CPD_SOURCE_DATASETS: tuple[str, ...] = (
+    "freddie_mac_sf_loan_level",
+    "fannie_mae_sf_performance",
+    "fhfa_pudb",
+)
 
 
 def _utc_now() -> str:
@@ -203,6 +210,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--normalized-input",
+        "--input",
+        dest="normalized_input",
         action="append",
         required=True,
         help="Path to normalized CSV from prepare_* scripts. Repeat for multiple datasets.",
@@ -233,6 +242,21 @@ def build_parser() -> argparse.ArgumentParser:
         default=100,
         help="Maximum number of decision-level audit traces to generate.",
     )
+    parser.add_argument(
+        "--cpd-source-dataset",
+        action="append",
+        default=None,
+        help=(
+            "Dataset ID to include in CPD estimation. "
+            "Repeat to include multiple datasets. "
+            "Default is performance-oriented institutional datasets only."
+        ),
+    )
+    parser.add_argument(
+        "--use-model-config-as-is",
+        action="store_true",
+        help="Use --model-config directly without re-estimating CPDs in this run.",
+    )
     return parser
 
 
@@ -262,23 +286,57 @@ def main() -> int:
     combined_fields = sorted({key for row in valid_rows for key in row.keys()})
     _write_csv(combined_normalized, combined_fields, valid_rows)
 
-    # 1-2. Estimate draft CPDs from normalized rows.
-    cpd_rows = [
-        {
-            "tenure": row["tenure"],
-            "utilization": row["utilization"],
-            "income": row["income"],
-            "dsc": row["dsc"],
-            "risk": row["risk"],
-        }
-        for row in valid_rows
-    ]
-    draft_config_payload = build_draft_model_config(
-        base_model_config_path=args.model_config,
-        rows=cpd_rows,
-        source_dataset_reference=";".join(sorted(set(datasets_used))),
-        notes="Draft CPD estimate from public institutional loan-level validation inputs.",
+    cpd_source_datasets = (
+        tuple(args.cpd_source_dataset)
+        if args.cpd_source_dataset
+        else DEFAULT_CPD_SOURCE_DATASETS
     )
+    cpd_source_rows = [
+        row for row in valid_rows if row.get("source_dataset", "") in cpd_source_datasets
+    ]
+    cpd_source_reference = ";".join(
+        sorted({row.get("source_dataset", "") for row in cpd_source_rows if row.get("source_dataset", "")})
+    )
+
+    if args.use_model_config_as_is:
+        draft_config_payload = read_json_file(args.model_config)
+        draft_config_payload.setdefault("estimation_metadata", {})
+        draft_config_payload["estimation_metadata"].update(
+            {
+                "approval_status": "draft",
+                "notes": "Validation run used model config as provided (no CPD re-estimation).",
+                "source_dataset_reference": cpd_source_reference or "not_applicable",
+                "estimated_nodes": [],
+                "skipped_nodes": [],
+            }
+        )
+    else:
+        if not cpd_source_rows:
+            raise ValueError(
+                "No rows available for CPD estimation from configured source datasets: "
+                + ", ".join(cpd_source_datasets)
+            )
+
+        # 1-2. Estimate draft CPDs from configured source datasets.
+        cpd_rows = [
+            {
+                "tenure": row["tenure"],
+                "utilization": row["utilization"],
+                "income": row["income"],
+                "dsc": row["dsc"],
+                "risk": row["risk"],
+            }
+            for row in cpd_source_rows
+        ]
+        draft_config_payload = build_draft_model_config(
+            base_model_config_path=args.model_config,
+            rows=cpd_rows,
+            source_dataset_reference=cpd_source_reference,
+            notes=(
+                "Draft CPD estimate from configured performance-oriented public institutional "
+                "loan-level validation inputs."
+            ),
+        )
     draft_model_config_path = output_dir / "draft_model_config.public_institutional.json"
     draft_model_config_path.write_text(json.dumps(draft_config_payload, indent=2), encoding="utf-8")
     cpd_summary = dict(draft_config_payload.get("estimation_metadata", {}))
@@ -350,6 +408,8 @@ def main() -> int:
     evidence_pack_metadata = export_evidence_pack(
         input_csv=batch_input_path,
         output_dir=evidence_pack_dir,
+        model_config_path=draft_model_config_path,
+        policy_config_path=Path(args.policy_config),
     )
 
     audit_chain_path = evidence_pack_dir / "audit_chain.json"
@@ -387,6 +447,8 @@ def main() -> int:
         "accepted_rows": len(valid_rows),
         "rejected_rows": rejected_rows,
         "datasets_used": sorted(set(datasets_used)),
+        "cpd_source_datasets": list(cpd_source_datasets),
+        "cpd_source_rows": len(cpd_source_rows),
         "draft_model_config": str(draft_model_config_path),
         "batch_summary": batch_summary,
         "decision_distribution": decision_distribution,

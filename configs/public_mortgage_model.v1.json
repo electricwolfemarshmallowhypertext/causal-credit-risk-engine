@@ -1,0 +1,183 @@
+{
+  "model_id": "public_mortgage_causal_dag",
+  "model_version": "1.0.0",
+  "description": "Public institutional loan-level validation model derived from normalized Freddie Mac data for explainability validation only.",
+  "nodes": [
+    {
+      "node_id": "tenure",
+      "human_label": "Employment Tenure",
+      "states": [
+        "short",
+        "long"
+      ],
+      "parents": [],
+      "mechanism_description": "Prior distribution over customer employment tenure.",
+      "node_type": "observed"
+    },
+    {
+      "node_id": "income",
+      "human_label": "Income Stability",
+      "states": [
+        "unstable",
+        "stable"
+      ],
+      "parents": [
+        "tenure"
+      ],
+      "mechanism_description": "Income stability is causally influenced by employment tenure.",
+      "node_type": "inferred"
+    },
+    {
+      "node_id": "dsc",
+      "human_label": "Debt Service Coverage",
+      "states": [
+        "below_threshold",
+        "above_threshold"
+      ],
+      "parents": [
+        "income"
+      ],
+      "mechanism_description": "Debt service coverage follows from income stability state.",
+      "node_type": "inferred"
+    },
+    {
+      "node_id": "utilization",
+      "human_label": "Credit Utilization",
+      "states": [
+        "high",
+        "low"
+      ],
+      "parents": [],
+      "mechanism_description": "Observed utilization prior for demonstration population.",
+      "node_type": "observed"
+    },
+    {
+      "node_id": "risk",
+      "human_label": "Default Risk Tier",
+      "states": [
+        "high_risk",
+        "low_risk"
+      ],
+      "parents": [
+        "dsc",
+        "utilization"
+      ],
+      "mechanism_description": "Outcome risk level driven by debt service coverage and utilization.",
+      "node_type": "outcome"
+    }
+  ],
+  "cpds": {
+    "tenure": {
+      "parents": [],
+      "outcomes": [
+        "short",
+        "long"
+      ],
+      "table": [
+        0.17053892403572943,
+        0.8294610759642705
+      ],
+      "estimation_status": "estimated_from_csv"
+    },
+    "utilization": {
+      "parents": [],
+      "outcomes": [
+        "high",
+        "low"
+      ],
+      "table": [
+        0.5236809469239101,
+        0.47631905307608985
+      ],
+      "estimation_status": "estimated_from_csv"
+    },
+    "income": {
+      "parents": [
+        "tenure"
+      ],
+      "outcomes": [
+        "unstable",
+        "stable"
+      ],
+      "table": [
+        [
+          0.07888438880706922,
+          0.06783943374086832
+        ],
+        [
+          0.9211156111929307,
+          0.9321605662591317
+        ]
+      ],
+      "estimation_status": "estimated_from_csv"
+    },
+    "dsc": {
+      "parents": [
+        "income"
+      ],
+      "outcomes": [
+        "below_threshold",
+        "above_threshold"
+      ],
+      "table": [
+        [
+          0.2611730271304739,
+          0.24053121387770943
+        ],
+        [
+          0.738826972869526,
+          0.7594687861222905
+        ]
+      ],
+      "estimation_status": "estimated_from_csv"
+    },
+    "risk": {
+      "parents": [
+        "dsc",
+        "utilization"
+      ],
+      "outcomes": [
+        "high_risk",
+        "low_risk"
+      ],
+      "table": [
+        [
+          [
+            0.005714285714285714,
+            0.004967801287948482
+          ],
+          [
+            0.0036592842363399494,
+            0.0032445586048398
+          ]
+        ],
+        [
+          [
+            0.9942857142857143,
+            0.9950321987120515
+          ],
+          [
+            0.99634071576366,
+            0.9967554413951601
+          ]
+        ]
+      ],
+      "estimation_status": "estimated_from_csv"
+    }
+  },
+  "estimation_metadata": {
+    "generated_at_utc": "2026-05-19T19:52:56+00:00",
+    "source_dataset_reference": "freddie_mac_sf_loan_level",
+    "estimator_version": "0.1.0",
+    "approval_status": "draft",
+    "notes": "Public institutional loan-level validation draft estimated from normalized Freddie Mac loan-level data.",
+    "estimated_nodes": [
+      "tenure",
+      "utilization",
+      "income",
+      "dsc",
+      "risk"
+    ],
+    "skipped_nodes": []
+  }
+}

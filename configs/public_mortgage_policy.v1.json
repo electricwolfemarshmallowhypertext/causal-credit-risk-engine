@@ -1,0 +1,9 @@
+{
+  "policy_id": "public_mortgage_validation_policy",
+  "policy_version": "1.0.0",
+  "decline_threshold": 0.0041568,
+  "manual_review_lower": 0.004,
+  "manual_review_upper": 0.0041568,
+  "risk_outcome_node": "risk",
+  "high_risk_state": "high_risk"
+}
