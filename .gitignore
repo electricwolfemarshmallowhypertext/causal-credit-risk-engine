@@ -33,6 +33,7 @@ env/
 outputs/
 outputs/demo/
 outputs/evidence_pack_*/
+validation/outputs/
 *.tmp
 *.bak
 *_out.csv

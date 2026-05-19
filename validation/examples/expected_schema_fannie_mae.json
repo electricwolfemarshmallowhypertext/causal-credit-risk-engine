@@ -1,0 +1,28 @@
+{
+  "dataset": "fannie_mae_sf_performance",
+  "description": "Expected source fields for Fannie Mae normalization inputs (acquisition + optional performance).",
+  "required_input_columns_any_alias": [
+    "loan_identifier",
+    "original_ltv OR ltv",
+    "original_cltv OR cltv",
+    "debt_to_income_ratio OR dti",
+    "borrower_credit_score OR credit_score"
+  ],
+  "optional_performance_columns": [
+    "current_loan_delinquency_status",
+    "loan_age",
+    "zero_balance_code"
+  ],
+  "normalized_output_columns": [
+    "source_dataset",
+    "source_record_id",
+    "tenant_id",
+    "tenure",
+    "utilization",
+    "income",
+    "dsc",
+    "risk",
+    "segment",
+    "mapping_notes"
+  ]
+}

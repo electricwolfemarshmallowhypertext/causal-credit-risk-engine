@@ -1,0 +1,30 @@
+{
+  "dataset": "cfpb_hmda",
+  "description": "Expected source fields for HMDA normalization input.",
+  "required_input_columns_any_alias": [
+    "action_taken",
+    "loan_purpose",
+    "state",
+    "county",
+    "census_tract"
+  ],
+  "recommended_input_columns": [
+    "debt_to_income_ratio",
+    "combined_loan_to_value_ratio",
+    "income OR applicant_income_000s",
+    "applicant_race_1 OR race_of_applicant_or_borrower_1",
+    "applicant_sex OR sex_of_applicant_or_borrower"
+  ],
+  "normalized_output_columns": [
+    "source_dataset",
+    "source_record_id",
+    "tenant_id",
+    "tenure",
+    "utilization",
+    "income",
+    "dsc",
+    "risk",
+    "segment",
+    "mapping_notes"
+  ]
+}

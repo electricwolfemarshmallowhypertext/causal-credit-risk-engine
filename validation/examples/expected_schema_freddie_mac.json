@@ -1,0 +1,28 @@
+{
+  "dataset": "freddie_mac_sf_loan_level",
+  "description": "Expected source fields for Freddie Mac normalization inputs (origination + optional performance).",
+  "required_input_columns_any_alias": [
+    "loan_sequence_number",
+    "original_loan_to_value OR ltv",
+    "original_combined_loan_to_value OR cltv",
+    "original_debt_to_income_ratio OR dti",
+    "credit_score OR borrower_credit_score"
+  ],
+  "optional_performance_columns": [
+    "current_loan_delinquency_status",
+    "loan_age",
+    "zero_balance_code"
+  ],
+  "normalized_output_columns": [
+    "source_dataset",
+    "source_record_id",
+    "tenant_id",
+    "tenure",
+    "utilization",
+    "income",
+    "dsc",
+    "risk",
+    "segment",
+    "mapping_notes"
+  ]
+}

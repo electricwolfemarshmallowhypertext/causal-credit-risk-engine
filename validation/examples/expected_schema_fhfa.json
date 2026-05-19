@@ -1,0 +1,28 @@
+{
+  "dataset": "fhfa_pudb",
+  "description": "Expected source fields for FHFA PUDB normalization input.",
+  "required_input_columns_any_alias": [
+    "income OR borrower_income",
+    "race OR borrower_race",
+    "sex OR borrower_sex",
+    "census_tract OR tract",
+    "ltv OR loan_to_value_ratio"
+  ],
+  "recommended_input_columns": [
+    "age_of_mortgage_note OR loan_age",
+    "debt_to_income_ratio",
+    "combined_loan_to_value_ratio"
+  ],
+  "normalized_output_columns": [
+    "source_dataset",
+    "source_record_id",
+    "tenant_id",
+    "tenure",
+    "utilization",
+    "income",
+    "dsc",
+    "risk",
+    "segment",
+    "mapping_notes"
+  ]
+}
