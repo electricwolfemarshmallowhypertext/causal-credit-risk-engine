@@ -1,4 +1,8 @@
-﻿# causal-credit-risk-engine
+﻿# C-DAG
+
+Causal audit traces for high-risk financial AI decisions.
+
+Formal implementation/repository name: `causal-credit-risk-engine`.
 
 ![Tests](https://github.com/electricwolfemarshmallowhypertext/causal-credit-risk-engine/actions/workflows/ci.yml/badge.svg)
 ![License: BUSL-1.1](https://img.shields.io/badge/license-BUSL--1.1-blue)
@@ -7,13 +11,15 @@
 
 Config-driven causal inference engine for explainability experiments in credit-risk governance, counterfactuals, and audit traces.
 
-`causal-credit-risk-engine` is a production-shaped reference implementation for demonstrating how causal AI can support explainability, human oversight, decision traceability, and governance workflows in high-risk AI contexts.
+C-DAG is a production-shaped reference implementation for demonstrating how causal AI can support explainability, human oversight, decision traceability, and governance workflows in high-risk AI contexts.
 
-> Warning: Source-available under BUSL-1.1. Reference implementation only; not for lending, credit eligibility, or production decisioning.
+The underlying package, `causal-credit-risk-engine`, provides the CLI/API implementation, model loading, inference, replay, and audit utilities.
+
+> Warning: Source-available software under BUSL-1.1, not OSI open-source, not for real lending decisions, and not for credit eligibility decisions.
 
 ## What this is
 
-`causal-credit-risk-engine` is a source-available reference implementation for turning model outputs from high-risk AI use-case simulations into replayable, inspectable governance artifacts.
+C-DAG is a source-available reference implementation for turning model outputs from high-risk AI use-case simulations into replayable, inspectable governance artifacts.
 
 It demonstrates a config-driven causal DAG workflow with decision pathways, counterfactuals, deterministic replay, and audit-chain integrity checks.
 
@@ -30,7 +36,7 @@ The paper describes the causal audit-trace pattern behind this repository: confi
 
 ## Public institutional validation
 
-`causal-credit-risk-engine` now includes a public institutional validation path using mortgage datasets from Freddie Mac, Fannie Mae, and HMDA/CFPB.
+C-DAG includes a public institutional validation path using mortgage datasets from Freddie Mac, Fannie Mae, and HMDA/CFPB.
 
 This validation path is designed to exercise the engine on public historical financial datasets while keeping the reference demo model unchanged.
 
