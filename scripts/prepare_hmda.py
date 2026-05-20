@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 from pathlib import Path
 import sys
 
@@ -15,7 +16,6 @@ from public_mortgage_validation_common import (
     first_value,
     normalize_header,
     normalized_record,
-    read_delimited_rows,
     write_normalized_csv,
 )
 
@@ -28,72 +28,95 @@ def build_parser() -> argparse.ArgumentParser:
         default=str(ROOT / "validation" / "outputs" / "hmda_normalized.csv"),
         help="Normalized output CSV path",
     )
-    parser.add_argument("--delimiter", default=",", help="Input delimiter")
+    parser.add_argument(
+        "--delimiter",
+        default="auto",
+        help="Input delimiter (use 'auto' to detect from header line)",
+    )
     parser.add_argument("--encoding", default="utf-8-sig", help="Input encoding")
+    parser.add_argument(
+        "--max-rows",
+        type=int,
+        default=None,
+        help="Optional maximum number of rows to normalize.",
+    )
     return parser
 
 
 def main() -> int:
     args = build_parser().parse_args()
-    rows = read_delimited_rows(
-        input_path=args.input,
-        delimiter=args.delimiter,
-        has_header=True,
-        encoding=args.encoding,
-    )
+    input_path = Path(args.input)
+    with input_path.open("r", encoding=args.encoding, newline="") as fh:
+        header_line = fh.readline()
+    delimiter = args.delimiter
+    if delimiter == "auto":
+        delimiter = "|" if header_line.count("|") > header_line.count(",") else ","
 
     normalized_rows: list[dict[str, str]] = []
-    for idx, raw in enumerate(rows, start=1):
-        record_id = (
-            first_value(raw, ("lei", "loan_id", "respondent_id"))
-            or f"hmda_{idx}"
-        )
-        normalized = normalized_record(
-            source_dataset="cfpb_hmda",
-            source_record_id=record_id,
-            row=raw,
-        )
+    with input_path.open("r", encoding=args.encoding, newline="") as fh:
+        reader = csv.DictReader(fh, delimiter=delimiter)
+        if reader.fieldnames is None:
+            raise ValueError(f"HMDA input is missing a header row: {input_path}")
+        normalized_headers = [normalize_header(name) for name in reader.fieldnames]
 
-        # HMDA-specific demographic aliases.
-        normalized["race"] = (
-            first_value(
-                raw,
-                (
-                    "applicant_race_1",
-                    "race_of_applicant_or_borrower_1",
-                    "derived_race",
-                ),
+        for idx, row in enumerate(reader, start=1):
+            raw = {
+                normalized_headers[col_idx]: str(value).strip()
+                for col_idx, value in enumerate(row.values())
+                if col_idx < len(normalized_headers)
+            }
+            record_id = (
+                first_value(raw, ("lei", "loan_id", "respondent_id"))
+                or f"hmda_{idx}"
             )
-            or normalized["race"]
-        )
-        normalized["sex"] = (
-            first_value(
-                raw,
-                (
-                    "applicant_sex",
-                    "sex_of_applicant_or_borrower",
-                    "derived_sex",
-                ),
+            normalized = normalized_record(
+                source_dataset="cfpb_hmda",
+                source_record_id=record_id,
+                row=raw,
             )
-            or normalized["sex"]
-        )
-        normalized["income_amount"] = (
-            first_value(raw, ("income", "income_amount", "applicant_income_000s"))
-            or normalized["income_amount"]
-        )
-        normalized["geography_state"] = (
-            first_value(raw, ("state", "state_2", "state_3"))
-            or normalized["geography_state"]
-        )
-        normalized["geography_county"] = (
-            first_value(raw, ("county", "county_code"))
-            or normalized["geography_county"]
-        )
-        normalized["geography_tract"] = (
-            first_value(raw, ("census_tract", "tract"))
-            or normalized["geography_tract"]
-        )
-        normalized_rows.append(normalized)
+
+            # HMDA-specific demographic aliases.
+            normalized["race"] = (
+                first_value(
+                    raw,
+                    (
+                        "applicant_race_1",
+                        "race_of_applicant_or_borrower_1",
+                        "derived_race",
+                    ),
+                )
+                or normalized["race"]
+            )
+            normalized["sex"] = (
+                first_value(
+                    raw,
+                    (
+                        "applicant_sex",
+                        "sex_of_applicant_or_borrower",
+                        "derived_sex",
+                    ),
+                )
+                or normalized["sex"]
+            )
+            normalized["income_amount"] = (
+                first_value(raw, ("income", "income_amount", "applicant_income_000s"))
+                or normalized["income_amount"]
+            )
+            normalized["geography_state"] = (
+                first_value(raw, ("state", "state_2", "state_3", "state_code"))
+                or normalized["geography_state"]
+            )
+            normalized["geography_county"] = (
+                first_value(raw, ("county", "county_code"))
+                or normalized["geography_county"]
+            )
+            normalized["geography_tract"] = (
+                first_value(raw, ("census_tract", "tract"))
+                or normalized["geography_tract"]
+            )
+            normalized_rows.append(normalized)
+            if args.max_rows is not None and idx >= args.max_rows:
+                break
 
     write_normalized_csv(args.output, normalized_rows)
     print(f"prepared_rows={len(normalized_rows)} output={args.output}")
