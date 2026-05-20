@@ -9,7 +9,7 @@ Config-driven causal inference engine for explainability experiments in credit-r
 
 `causal-credit-risk-engine` is a production-style Python package for demonstrating how causal AI can support explainability, human oversight, decision traceability, and governance workflows in high-risk AI contexts.
 
-> Warning: Source-available software under BUSL-1.1, not OSI open-source, not for real lending decisions, and not for credit eligibility decisions.
+> Warning: Source-available under BUSL-1.1. Reference implementation only; not for lending, credit eligibility, or production decisioning.
 
 ## What this is
 
