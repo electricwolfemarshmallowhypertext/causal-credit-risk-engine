@@ -5,19 +5,19 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19779499.svg)](https://doi.org/10.5281/zenodo.19779499)
 
-Config-driven causal inference engine for explainable credit-risk decisions, counterfactuals, and audit traces.
+Config-driven causal inference engine for explainability experiments in credit-risk governance, counterfactuals, and audit traces.
 
-`causal-credit-risk-engine` is a production-shaped Python package for demonstrating how causal AI can support explainability, human oversight, decision traceability, and governance workflows in high-risk AI contexts.
+`causal-credit-risk-engine` is a production-style Python package for demonstrating how causal AI can support explainability, human oversight, decision traceability, and governance workflows in high-risk AI contexts.
 
 > Warning: Source-available software under BUSL-1.1, not OSI open-source, not for real lending decisions, and not for credit eligibility decisions.
 
 ## What this is
 
-`causal-credit-risk-engine` is a reference implementation for turning high-risk AI decisions into replayable, inspectable audit artifacts.
+`causal-credit-risk-engine` is a source-available reference implementation for turning model outputs from high-risk AI use-case simulations into replayable, inspectable governance artifacts.
 
-It demonstrates how a config-driven causal DAG can produce causal decision pathways, counterfactual explanations, structured audit records, deterministic replay checks, tamper-evident audit-chain metadata, subgroup fairness diagnostics, and CLI/API/batch workflows.
+It demonstrates a config-driven causal DAG workflow with decision pathways, counterfactuals, deterministic replay, and audit-chain integrity checks.
 
-The goal is not to score credit applications. The goal is to show how causal reasoning can be packaged as an audit layer for AI governance, model-risk review, and compliance workflows.
+It is an explainability and governance layer, not a production lending system.
 
 ## Research note
 
@@ -28,17 +28,55 @@ A technical brief describing the architecture is available on Zenodo:
 
 The paper describes the causal audit-trace pattern behind this repository: config-driven causal reasoning, deterministic replay, audit-chain integrity, fairness diagnostics, and governance-oriented decision artifacts.
 
-## What this provides
+## Public institutional validation
 
-- Versioned model and policy config loading
-- Exact inference for discrete causal DAGs
-- Intervention-style counterfactuals
-- Structured audit records
-- Deterministic replay checks
-- CSV batch processing with row-level errors
-- FastAPI service surface
-- Tamper-evident audit hash/chaining utilities
-- Lightweight subgroup fairness diagnostics
+`causal-credit-risk-engine` now includes a public institutional validation path using mortgage datasets from Freddie Mac, Fannie Mae, and HMDA/CFPB.
+
+This validation path is designed to exercise the engine on public historical financial datasets while keeping the reference demo model unchanged.
+
+Current validation coverage:
+
+- Freddie Mac single-family loan-level data
+- Fannie Mae single-family historical performance data
+- HMDA / CFPB modified loan/application register data
+- normalized public mortgage input generation
+- public mortgage model and policy configuration
+- batch decision generation
+- fairness diagnostics
+- deterministic replay checks
+- audit-chain verification
+- sampled evidence-pack export
+
+Example run summary:
+
+- Rows processed: 30,000
+- Accepted rows: 30,000
+- Rejected rows: 0
+- Datasets used: Freddie Mac, Fannie Mae, HMDA/CFPB
+- Decision distribution: APPROVE 9,584 | REVIEW 4,368 | DECLINE 16,048
+- Replay success rate: 1.0
+- Audit-chain verification: true
+- Evidence-pack mode: sampled, 1,000 rows
+
+This is public institutional loan-level validation, not production validation. It does not use customer data, does not make real credit eligibility decisions, and does not prove regulatory compliance.
+
+Run public validation:
+
+```bash
+python scripts/run_public_mortgage_validation.py --input <normalized_csv> --model-config configs/public_mortgage_model.v1.json --policy-config configs/public_mortgage_policy.v1.json --use-model-config-as-is --max-audits 200
+```
+
+## Executive positioning
+
+`causal-credit-risk-engine` is a config-driven causal decision-audit engine for credit-risk governance workflows: it loads versioned model and policy definitions, produces deterministic decisions and counterfactual explanations, and emits replayable audit artifacts that model-risk, compliance, internal-audit, and engineering teams can inspect independently. It is intended as an explainability and control layer alongside existing decision systems (via CLI or API), not as a production lending adjudication engine or regulatory certification artifact.
+
+## Capability summary
+
+- Versioned model and policy configuration runtime with schema validation at load time.
+- Exact inference for discrete causal DAGs plus intervention-style counterfactual generation.
+- Deterministic replay checks and tamper-evident audit-chain verification for investigation evidence.
+- Batch CSV processing and FastAPI endpoints with row-level decision and error outputs.
+- Subgroup fairness diagnostics and evidence-pack export workflow for governance review.
 
 ## Architecture
 
@@ -76,77 +114,12 @@ Every decision can produce a structured JSON audit record containing:
 
 ## How this integrates
 
-`causal-credit-risk-engine` is designed to sit beside existing model-risk, compliance, and audit workflows. It does not replace a credit model, loan origination system, or governance platform. It provides a causal explainability layer that can turn a decision into a structured, replayable, and reviewable audit artifact.
+`causal-credit-risk-engine` is intended for pilot use beside existing risk, compliance, and audit workflows as an explainability layer.
 
-### Batch file workflow
-
-For offline review, the engine can process CSV evidence files and produce row-level decision outputs.
-
-Typical use:
-
-```bash
-python -m causal_credit_risk.cli --batch-csv-input ./input.csv --batch-csv-output ./output.csv
-```
-
-Example input:
-
-```csv
-tenure,utilization
-short,high
-long,low
-```
-
-This supports governance teams that need to test multiple cases, compare decision behavior, review counterfactuals, or generate evidence packs without standing up a service.
-
-### API workflow
-
-For integration into internal systems, the package includes an API surface that can expose decision, replay, and batch endpoints.
-
-Typical integration pattern:
-
-```text
-Internal system -> causal decision API -> audit JSON -> governance storage
-```
-
-The API is intended to be deployed behind enterprise controls such as an API gateway, authentication, TLS, access logging, rate limiting, and tenant-specific storage. Authentication is deliberately treated as a deployment-boundary concern, not embedded into the reference engine.
-
-### Audit export workflow
-
-Every decision can produce a structured JSON audit record containing:
-
-* input evidence
-* inferred nodes
-* risk probability
-* decision
-* causal chain
-* counterfactuals
-* model and policy versions
-* validation status
-
-That audit record can be exported to existing governance systems, case-management tools, model-risk repositories, compliance archives, or regulator-response packages.
-
-The key point: the audit artifact is not just a score. It is a decision trace.
-
-### Model-risk management workflow
-
-In an MRM workflow, the engine supports:
-
-1. **Model design review**
-   Review the causal DAG, node definitions, CPDs, assumptions, and mechanism descriptions.
-
-2. **Validation review**
-   Run controlled cases, replay audit records, test counterfactuals, and verify policy behavior.
-
-3. **Approval workflow**
-   Record model version, policy version, validation status, and known limitations before deployment.
-
-4. **Monitoring workflow**
-   Compare decision outputs, counterfactual behavior, subgroup reports, and replay results over time.
-
-5. **Regulator or audit response**
-   Produce a decision-level JSON record showing which evidence was used, which nodes were inferred, which causal pathway drove the decision, and what interventions would have changed the outcome.
-
-This makes the package useful as a causal explainability layer for MRM, compliance, internal audit, and AI governance teams.
+- Batch workflow: process CSV evidence into row-level decisions and governance artifacts.
+- API workflow: expose decision/replay/batch endpoints in internal environments, with enterprise controls added at deployment.
+- Audit workflow: export replayable JSON decision traces to governance systems.
+- MRM workflow: review causal assumptions, verify policy behavior, and track versioned decision outputs over time.
 
 ## Install
 
@@ -272,7 +245,7 @@ curl -s http://127.0.0.1:8000/healthz
 Routes:
 
 - `GET /healthz` -> `{"status":"ok"}`
-- `GET /readyz` -> validates model/policy runtime readiness
+- `GET /readyz` -> validates model/policy load and basic runtime health (not production readiness)
 - `POST /v1/decision` -> decision/audit payload for submitted evidence
 - `POST /v1/replay` -> deterministic replay check against active model/policy
 - `POST /v1/batch` -> row-level decision outputs or row-level errors
@@ -291,50 +264,13 @@ Generated schema:
 
 - `examples/openapi.json`
 
-## Replay proof
+## Documentation map
 
-Deterministic replay behavior and mismatch contract checks are documented in:
-
-- [`docs/replay_proof.md`](docs/replay_proof.md)
-
-## Workflow docs
-
-- End-to-end workflow: [`docs/end_to_end_workflow.md`](docs/end_to_end_workflow.md)
-- Commercial pilot flow: [`docs/commercial_pilot.md`](docs/commercial_pilot.md)
-- OpenAPI export details: [`docs/openapi.md`](docs/openapi.md)
-
-## Governance and enterprise docs
-
-- [`MODEL_CARD.md`](MODEL_CARD.md)
-- [`docs/architecture.md`](docs/architecture.md)
-- [`docs/api_examples.md`](docs/api_examples.md)
-- [`docs/openapi.md`](docs/openapi.md)
-- [`docs/config_schema.md`](docs/config_schema.md)
-- [`docs/enterprise_seams.md`](docs/enterprise_seams.md)
-- [`docs/auth_adapter_plan.md`](docs/auth_adapter_plan.md)
-- [`docs/audit_storage_adapter_plan.md`](docs/audit_storage_adapter_plan.md)
-- [`docs/tenant_isolation_plan.md`](docs/tenant_isolation_plan.md)
-- [`docs/cpd_estimation_workflow.md`](docs/cpd_estimation_workflow.md)
-- [`docs/evidence_pack_workflow.md`](docs/evidence_pack_workflow.md)
-- [`docs/security_posture.md`](docs/security_posture.md)
-- [`docs/security_checklist.md`](docs/security_checklist.md)
-- [`docs/privacy_pii.md`](docs/privacy_pii.md)
-- [`docs/data_governance.md`](docs/data_governance.md)
-- [`docs/model_governance_lifecycle.md`](docs/model_governance_lifecycle.md)
-- [`docs/use_cases.md`](docs/use_cases.md)
-- [`docs/audit_integrity.md`](docs/audit_integrity.md)
-- [`docs/fairness_report.md`](docs/fairness_report.md)
-- [`docs/end_to_end_workflow.md`](docs/end_to_end_workflow.md)
-- [`docs/commercial_pilot.md`](docs/commercial_pilot.md)
-- [`docs/release_notes_v0.2.0.md`](docs/release_notes_v0.2.0.md)
-
-## Buyer docs
-
-- [`docs/known_limitations.md`](docs/known_limitations.md)
-- [`docs/pilot_evaluation_plan.md`](docs/pilot_evaluation_plan.md)
-- [`docs/procurement_faq.md`](docs/procurement_faq.md)
-- [`docs/integration_boundaries.md`](docs/integration_boundaries.md)
-- [`docs/buyer_demo_script.md`](docs/buyer_demo_script.md)
+- Architecture and model context: [`MODEL_CARD.md`](MODEL_CARD.md), [`docs/architecture.md`](docs/architecture.md), [`docs/config_schema.md`](docs/config_schema.md), [`docs/model_governance_lifecycle.md`](docs/model_governance_lifecycle.md)
+- API and deployment boundaries: [`docs/api_examples.md`](docs/api_examples.md), [`docs/openapi.md`](docs/openapi.md), [`docs/integration_boundaries.md`](docs/integration_boundaries.md), [`docs/enterprise_seams.md`](docs/enterprise_seams.md)
+- Replay, audit integrity, and fairness: [`docs/replay_proof.md`](docs/replay_proof.md), [`docs/audit_integrity.md`](docs/audit_integrity.md), [`docs/fairness_report.md`](docs/fairness_report.md), [`docs/evidence_pack_workflow.md`](docs/evidence_pack_workflow.md)
+- Security and governance controls: [`docs/security_posture.md`](docs/security_posture.md), [`docs/security_checklist.md`](docs/security_checklist.md), [`docs/privacy_pii.md`](docs/privacy_pii.md), [`docs/data_governance.md`](docs/data_governance.md)
+- Evaluation and buyer readiness: [`docs/end_to_end_workflow.md`](docs/end_to_end_workflow.md), [`docs/commercial_pilot.md`](docs/commercial_pilot.md), [`docs/known_limitations.md`](docs/known_limitations.md), [`docs/pilot_evaluation_plan.md`](docs/pilot_evaluation_plan.md), [`docs/procurement_faq.md`](docs/procurement_faq.md), [`docs/buyer_demo_script.md`](docs/buyer_demo_script.md), [`docs/release_notes_v0.2.0.md`](docs/release_notes_v0.2.0.md)
 
 ## Examples
 
@@ -356,8 +292,6 @@ Included examples:
 - `examples/audit_chain_verify_failure.example.json`
 - `examples/api_fairness_request.json`
 - `examples/api_fairness_response.json`
-- CSV batch input format shown above
-- Graphviz/DOT export command shown above
 
 ## License
 
