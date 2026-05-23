@@ -1,0 +1,9 @@
+{
+  "policy_id": "public_crt_validation_policy",
+  "policy_version": "1.0.0",
+  "decline_threshold": 0.62,
+  "manual_review_lower": 0.42,
+  "manual_review_upper": 0.62,
+  "risk_outcome_node": "crt_escalation_risk",
+  "high_risk_state": "high_escalation"
+}

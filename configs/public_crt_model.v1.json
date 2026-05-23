@@ -1,0 +1,213 @@
+{
+  "model_id": "public_crt_causal_dag",
+  "model_version": "1.0.0",
+  "description": "Public CRT loan-level validation model for C-DAG explainability workflow.",
+  "nodes": [
+    {
+      "node_id": "leverage_risk",
+      "human_label": "Leverage Risk",
+      "states": [
+        "high_leverage",
+        "lower_leverage"
+      ],
+      "parents": [],
+      "mechanism_description": "Observed leverage proxy from loan-level LTV or CLTV disclosure.",
+      "node_type": "observed"
+    },
+    {
+      "node_id": "borrower_credit_risk",
+      "human_label": "Borrower Credit Risk",
+      "states": [
+        "elevated_credit_risk",
+        "lower_credit_risk"
+      ],
+      "parents": [],
+      "mechanism_description": "Observed borrower credit proxy from disclosed credit-score fields.",
+      "node_type": "observed"
+    },
+    {
+      "node_id": "property_or_pool_segment",
+      "human_label": "Property or Pool Segment",
+      "states": [
+        "stressed_segment",
+        "standard_segment"
+      ],
+      "parents": [],
+      "mechanism_description": "Observed pool/property segmentation proxy from public CRT fields.",
+      "node_type": "observed"
+    },
+    {
+      "node_id": "loan_performance_risk",
+      "human_label": "Loan Performance Risk",
+      "states": [
+        "high_performance_risk",
+        "lower_performance_risk"
+      ],
+      "parents": [
+        "leverage_risk",
+        "borrower_credit_risk"
+      ],
+      "mechanism_description": "Loan performance risk inferred from leverage and borrower credit risk.",
+      "node_type": "inferred"
+    },
+    {
+      "node_id": "delinquency_or_loss_proxy",
+      "human_label": "Delinquency or Loss Proxy",
+      "states": [
+        "adverse_proxy",
+        "benign_proxy"
+      ],
+      "parents": [
+        "loan_performance_risk",
+        "property_or_pool_segment"
+      ],
+      "mechanism_description": "Adverse delinquency/loss proxy inferred from loan performance risk and segment context.",
+      "node_type": "inferred"
+    },
+    {
+      "node_id": "crt_escalation_risk",
+      "human_label": "CRT Escalation Risk",
+      "states": [
+        "high_escalation",
+        "low_escalation"
+      ],
+      "parents": [
+        "delinquency_or_loss_proxy",
+        "borrower_credit_risk"
+      ],
+      "mechanism_description": "Outcome escalation risk for governance review in public CRT validation.",
+      "node_type": "outcome"
+    }
+  ],
+  "cpds": {
+    "leverage_risk": {
+      "parents": [],
+      "outcomes": [
+        "high_leverage",
+        "lower_leverage"
+      ],
+      "table": [
+        0.5,
+        0.5
+      ]
+    },
+    "borrower_credit_risk": {
+      "parents": [],
+      "outcomes": [
+        "elevated_credit_risk",
+        "lower_credit_risk"
+      ],
+      "table": [
+        0.45,
+        0.55
+      ]
+    },
+    "property_or_pool_segment": {
+      "parents": [],
+      "outcomes": [
+        "stressed_segment",
+        "standard_segment"
+      ],
+      "table": [
+        0.4,
+        0.6
+      ]
+    },
+    "loan_performance_risk": {
+      "parents": [
+        "leverage_risk",
+        "borrower_credit_risk"
+      ],
+      "outcomes": [
+        "high_performance_risk",
+        "lower_performance_risk"
+      ],
+      "table": [
+        [
+          [
+            0.85,
+            0.7
+          ],
+          [
+            0.55,
+            0.3
+          ]
+        ],
+        [
+          [
+            0.15,
+            0.3
+          ],
+          [
+            0.45,
+            0.7
+          ]
+        ]
+      ]
+    },
+    "delinquency_or_loss_proxy": {
+      "parents": [
+        "loan_performance_risk",
+        "property_or_pool_segment"
+      ],
+      "outcomes": [
+        "adverse_proxy",
+        "benign_proxy"
+      ],
+      "table": [
+        [
+          [
+            0.9,
+            0.75
+          ],
+          [
+            0.6,
+            0.25
+          ]
+        ],
+        [
+          [
+            0.1,
+            0.25
+          ],
+          [
+            0.4,
+            0.75
+          ]
+        ]
+      ]
+    },
+    "crt_escalation_risk": {
+      "parents": [
+        "delinquency_or_loss_proxy",
+        "borrower_credit_risk"
+      ],
+      "outcomes": [
+        "high_escalation",
+        "low_escalation"
+      ],
+      "table": [
+        [
+          [
+            0.92,
+            0.8
+          ],
+          [
+            0.55,
+            0.25
+          ]
+        ],
+        [
+          [
+            0.08,
+            0.2
+          ],
+          [
+            0.45,
+            0.75
+          ]
+        ]
+      ]
+    }
+  }
+}

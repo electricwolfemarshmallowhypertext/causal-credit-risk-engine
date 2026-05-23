@@ -1,0 +1,58 @@
+{
+  "dataset": "freddie_mac_stacr_loan_level",
+  "format": "csv_or_txt_with_header",
+  "accepted_extensions": [
+    ".csv",
+    ".txt",
+    ".zip"
+  ],
+  "header_notes": "Column names can vary; scripts/prepare_freddie_stacr.py uses aliases.",
+  "required_normalized_output_columns": [
+    "source_dataset",
+    "source_record_id",
+    "tenant_id",
+    "leverage_risk",
+    "borrower_credit_risk",
+    "loan_performance_risk",
+    "property_or_pool_segment",
+    "delinquency_or_loss_proxy",
+    "crt_escalation_risk",
+    "segment",
+    "mapping_notes"
+  ],
+  "input_field_aliases": {
+    "loan_id": [
+      "loan_sequence_number",
+      "loan_id",
+      "loan_identifier"
+    ],
+    "ltv_or_cltv": [
+      "current_cltv",
+      "combined_ltv",
+      "cltv",
+      "current_ltv",
+      "original_ltv",
+      "ltv"
+    ],
+    "credit_score": [
+      "credit_score",
+      "borrower_credit_score",
+      "fico",
+      "original_fico"
+    ],
+    "delinquency_or_loss": [
+      "current_loan_delinquency_status",
+      "days_delinquent",
+      "cumulative_loss",
+      "realized_loss"
+    ],
+    "segment_fields": [
+      "deal_name",
+      "pool_id",
+      "pool_identifier",
+      "property_state",
+      "state",
+      "msa"
+    ]
+  }
+}
