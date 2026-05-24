@@ -467,9 +467,9 @@ a:hover {
   align-items: center;
   gap: 1rem;
   text-align: center;
-  width: 100%;
+  width: 724px;
   max-width: 100%;
-  margin: 0;
+  margin: 0 auto;
 }
 
 .feature-token {
@@ -622,6 +622,10 @@ a:hover {
   color: var(--accent-cyan);
 }
 
+.loss-nowrap {
+  white-space: nowrap;
+}
+
 .loss-exposure.section-break {
   border-top: 0;
 }
@@ -700,11 +704,12 @@ a:hover {
 }
 
 .boundaries-inline {
-  padding-top: clamp(2.6rem, 6vw, 5rem);
+  padding-top: clamp(6.2rem, 9vw, 7.4rem);
 }
 
 .boundaries-inline .section-title {
   max-width: none;
+  margin-top: 0;
 }
 
 .acc-item {
@@ -778,6 +783,13 @@ a:hover {
   flex-wrap: wrap;
   gap: 0.55rem;
   justify-content: center;
+}
+
+.cta-note {
+  margin: 0.7rem auto 0;
+  max-width: 50ch;
+  color: var(--muted);
+  font-size: clamp(0.95rem, 1.2vw, 1.05rem);
 }
 
 .btn {
