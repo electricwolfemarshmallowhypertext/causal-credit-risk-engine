@@ -215,7 +215,7 @@ a:hover {
 
 .hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(17rem, 0.7fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: clamp(1.2rem, 4vw, 3rem);
   align-items: start;
 }
@@ -409,6 +409,17 @@ a:hover {
   border-top: 1px solid var(--rule);
 }
 
+.governance-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+  gap: clamp(1.1rem, 2.6vw, 2rem);
+  align-items: start;
+}
+
+.governance-left {
+  min-width: 0;
+}
+
 .row {
   display: grid;
   grid-template-columns: 3.5rem minmax(9rem, 16rem) 1fr;
@@ -443,6 +454,98 @@ a:hover {
   font-size: clamp(1.05rem, 1.9vw, 1.25rem);
   color: var(--muted);
   max-width: 62ch;
+}
+
+.governance-pipeline {
+  min-width: 0;
+}
+
+.pipeline-card {
+  border: 1px solid rgba(156, 255, 0, 0.26);
+  background:
+    linear-gradient(135deg, rgba(156, 255, 0, 0.08), transparent 34%),
+    rgba(6, 24, 18, 0.92);
+  padding: clamp(18px, 2.5vw, 28px);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+}
+
+.pipeline-kicker {
+  margin: 0 0 8px;
+  color: var(--accent-cyan, #00e5e5);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+}
+
+.pipeline-card h3 {
+  margin: 0 0 16px;
+  color: var(--text, #f4fff7);
+  font-size: clamp(1.6rem, 3vw, 2.6rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.pipeline-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.pipeline-grid {
+  fill: none;
+  stroke: rgba(244, 255, 247, 0.13);
+  stroke-width: 1;
+}
+
+.pipeline-flow {
+  fill: none;
+  stroke: #9cff00;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 5px rgba(156, 255, 0, 0.55));
+}
+
+.pipe-node polygon {
+  fill: #0a1d16;
+  stroke: rgba(244, 255, 247, 0.38);
+  stroke-width: 1;
+}
+
+.pipe-node polygon:first-child {
+  fill: #123024;
+  stroke: rgba(156, 255, 0, 0.55);
+}
+
+.pipe-node circle,
+.pipe-node rect,
+.pipe-node path:not(.gauge),
+.pipe-node line:not(.needle) {
+  fill: #9cff00;
+}
+
+.pipe-node text {
+  fill: #07110d;
+  font: 900 11px Arial, sans-serif;
+}
+
+.pipe-label {
+  fill: var(--text, #f4fff7) !important;
+  font: 800 11px Arial, sans-serif !important;
+  letter-spacing: 0.04em;
+}
+
+.gauge {
+  fill: none !important;
+  stroke: #9cff00;
+  stroke-width: 5;
+}
+
+.needle {
+  stroke: var(--accent-cyan, #00e5e5);
+  stroke-width: 4;
+  stroke-linecap: round;
 }
 
 .feature-boundary-wrap {
@@ -926,6 +1029,10 @@ a:hover {
     grid-template-columns: 1fr;
   }
 
+  .governance-grid {
+    grid-template-columns: 1fr;
+  }
+
   .boundaries-inline {
     padding-top: 0;
   }
@@ -948,6 +1055,10 @@ a:hover {
 
   .loss-grid {
     grid-template-columns: repeat(2, minmax(16rem, 1fr));
+  }
+
+  .governance-pipeline {
+    margin-top: 2rem;
   }
 
   .validation-card,
